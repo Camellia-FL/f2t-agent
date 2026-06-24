@@ -14,7 +14,7 @@ TypeScript Express app (v5) providing a streaming AI assistant for fleet managem
 - `src/agent.ts` - Core agent logic, LLM streaming, tool calling loop
 - `src/decoders.ts` - SSE stream decoder for llama.cpp responses
 - `src/routes/agent.ts` - HTTP endpoints for chat and session management
-- `src/tools/` - Tool definitions, executor, and SearXNG search client
+- `src/tools/` - Tool definitions, executor, report client, and SearXNG search client
 
 ## Prerequisites
 
@@ -30,6 +30,7 @@ TypeScript Express app (v5) providing a streaming AI assistant for fleet managem
 | `LLAMA_N_PREDICT` | 2048 | Max tokens to generate |
 | `AGENT_MAX_MEMORY` | 20 | Max messages per session |
 | `SEARXNG_URL` | http://localhost:8888 | SearXNG search instance |
+| `REPORT_BASE_URL` | http://localhost:8081 | Report service base URL |
 
 ## Key Quirks
 

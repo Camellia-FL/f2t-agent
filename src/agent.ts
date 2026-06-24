@@ -12,25 +12,34 @@ const sessions = new Map<string, Conversation>();
 interface ChatMessage { role: "system" | "user" | "assistant" | "tool"; content: string | null; tool_calls?: unknown[]; tool_call_id?: string; }
 interface Conversation { messages: ChatMessage[]; }
 
-const SYSTEM_PROMPT: ChatMessage = {
-  role: "system",
-  content:
+const SYSTEM_PROMPT_BASE =
     `You are f2t-ai, a fleet management assistant.
 Your name is Orbit.
 You can use the web_search tool to find current information online.
 For general chat, respond naturally.
-You must use the language used by the user.`,
-};
+You must use the language used by the user.`;
+
+function buildSystemPrompt(customerId?: string, userId?: string): ChatMessage {
+  const now = new Date();
+  const currentUtcSec = Math.floor(now.getTime() / 1000);
+  const dateStr = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+  let context = SYSTEM_PROMPT_BASE;
+  context += `\nCurrent UTC date/time: ${dateStr}`;
+  context += `\nCurrent Unix timestamp (seconds): ${currentUtcSec}`;
+  if (customerId) context += `\nCurrent customer ID: ${customerId}`;
+  if (userId) context += `\nCurrent user ID: ${userId}`;
+  return { role: "system", content: context };
+}
 
 export function clearSession(sessionId: string): void { sessions.delete(sessionId); }
 
 export async function* chat(
-  userMessage: string, sessionId?: string, signal?: AbortSignal
+  userMessage: string, sessionId?: string, customerId?: string, userId?: string, signal?: AbortSignal
 ): AsyncGenerator<AgentEvent> {
   const sid = sessionId || randomUUID();
   const isNew = !sessions.has(sid);
   let conv = sessions.get(sid);
-  if (!conv) { conv = { messages: [{ ...SYSTEM_PROMPT }] }; sessions.set(sid, conv); }
+  if (!conv) { conv = { messages: [buildSystemPrompt(customerId, userId)] }; sessions.set(sid, conv); }
   conv.messages.push({ role: "user", content: userMessage });
   if (conv.messages.length > AGENT_MAX_MEMORY) conv.messages = [conv.messages[0], ...conv.messages.slice(-(AGENT_MAX_MEMORY - 1))];
   if (isNew) yield { type: "session", sessionId: sid };

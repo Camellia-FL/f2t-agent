@@ -4,7 +4,7 @@ import { chat, clearSession } from "../agent";
 const router = Router();
 
 router.post("/chat", async (req: Request, res: Response) => {
-  const { message, sessionId } = req.body;
+  const { message, sessionId, customerId, userId } = req.body;
 
   if (!message || typeof message !== "string" || message.trim().length === 0) {
     res.status(400).json({ error: "message is required" });
@@ -25,7 +25,7 @@ router.post("/chat", async (req: Request, res: Response) => {
   });
 
   try {
-    for await (const event of chat(message, sessionId, ac.signal)) {
+    for await (const event of chat(message, sessionId, customerId, userId, ac.signal)) {
       switch (event.type) {
         case "session":
           res.write(`event: session\ndata: ${JSON.stringify({ sessionId: event.sessionId })}\n\n`);
