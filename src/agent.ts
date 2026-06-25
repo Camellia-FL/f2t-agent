@@ -4,7 +4,7 @@ import { tools } from "./tools/definitions";
 import { executeTool, ToolCall } from "./tools/executor";
 
 const LLAMA_BASE_URL = process.env.LLAMA_BASE_URL || "http://127.0.0.1:8080";
-const LLAMA_N_PREDICT = parseInt(process.env.LLAMA_N_PREDICT || "2048", 10);
+const LLAMA_N_PREDICT = parseInt(process.env.LLAMA_N_PREDICT || "16384", 10);
 const AGENT_MAX_MEMORY = parseInt(process.env.AGENT_MAX_MEMORY || "20", 10);
 const MAX_TOOL_ROUNDS = 5;
 const sessions = new Map<string, Conversation>();
@@ -12,12 +12,14 @@ const sessions = new Map<string, Conversation>();
 interface ChatMessage { role: "system" | "user" | "assistant" | "tool"; content: string | null; tool_calls?: unknown[]; tool_call_id?: string; }
 interface Conversation { messages: ChatMessage[]; }
 
-const SYSTEM_PROMPT_BASE =
-    `You are f2t-ai, a fleet management assistant.
-Your name is Orbit.
-You can use the web_search tool to find current information online.
-For general chat, respond naturally.
-You must use the language used by the user.`;
+const SYSTEM_PROMPT_BASE = `
+      You are f2t-ai, a fleet management assistant.
+      Your name is Orbit.
+      You can use the web_search tool to find current information online.
+      For general chat, respond naturally.
+      You must use the language used by the user.
+      IMPORTANT: Never reveal your user ID, customer ID, session IDs, asset IDs, or any other internal identifiers in your responses to the user. These are internal system values and must be kept hidden.
+`;
 
 function buildSystemPrompt(customerId?: string, userId?: string): ChatMessage {
   const now = new Date();

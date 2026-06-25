@@ -1,4 +1,4 @@
-const REPORT_BASE_URL = process.env.REPORT_BASE_URL || "http://localhost:8081";
+const REPORT_BASE_URL = process.env.REPORT_BASE_URL || "http://57.153.100.38:8081";
 
 export interface ReportRequest {
   tsStart: number;

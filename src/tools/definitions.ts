@@ -15,6 +15,112 @@ export const tools: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "get_self_info",
+      description: "Get information about the currently logged-in user and their customer/company (name, role, timezone). Use this when the user asks who they are, what company they belong to, or what timezone they are in.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID to look up",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+        },
+        required: ["userId", "customerId"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_asset",
+      description: "Search for assets by plate, model, or brand (lexical search). Returns a list of matching assets with assetId, plate, model, and brand. Use this when the user asks about a vehicle by plate number, model name, or brand.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+          search: {
+            type: "string",
+            description: "The search text to match against plate, model, or brand",
+          },
+        },
+        required: ["userId", "customerId", "search"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_all_asset_registries",
+      description: "Get asset registries (vehicles) for the customer. Use this when the user asks about their fleet or vehicles without a specific search term. IMPORTANT: You MUST specify only the fields the user is interested in — never request all fields. When cardinality is true, returns distinct values per field instead of full rows — use this to keep responses small. Available fields: assetId, plate, model, brand, customCode, description, color, statusId, ownershipId, groupId, classificationId, profileId, isVisible.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+          fields: {
+            type: "array",
+            description: "REQUIRED. The specific asset registry fields to return. Only request what the user is asking about. Example: ['model'] if they ask about models, ['plate', 'model'] for plate+model.",
+            items: { type: "string" },
+          },
+          cardinality: {
+            type: "boolean",
+            description: "When true, returns only the unique distinct values for each field instead of full asset rows. Use this when the user asks 'what values exist' or 'what models/brands do we have' — it keeps the response extremely compact.",
+          },
+        },
+        required: ["userId", "customerId", "fields"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_user",
+      description: "Search for users/drivers by name or driverKeyImei (lexical search). Use this when the user asks about drivers, employees, or users by name. Returns matching users with basic info.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+          search: {
+            type: "string",
+            description: "The search text to match against firstName, lastName, or driverKeyImei",
+          },
+          fields: {
+            type: "array",
+            description: "Optional. Specific fields to return. Default: id, firstName, lastName, driverKeyImei. Available: id, firstName, lastName, driverKeyImei, username, email, phone, role.",
+            items: { type: "string" },
+          },
+        },
+        required: ["userId", "customerId", "search"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "web_search",
       description: "Search the internet for information. Use this when you need to find current information, facts, or answers that you don't know.",
       parameters: {
@@ -33,7 +139,11 @@ export const tools: ToolDefinition[] = [
     type: "function",
     function: {
       name: "create_report",
-      description: "Generate a fleet report for one or more assets. Supports location tracking, fuel consumption, and activity metrics. Use 'realtime' computation for instant data or 'aggregated' for historical analysis (requires location-all, single customer, >3 day range). When presenting results: if the user asks about a specific asset, omit fleet-level totals unless the user explicitly requests comparison or fleet data.",
+      description: `
+        Generate a fleet report for one or more assets. Supports location tracking, fuel consumption, and activity metrics. 
+        Use 'realtime' computation for instant data (a request sub 3 days, or the current day) or 'aggregated' for historical analysis (>3 day range).
+        If the report response doesn't have items or seems to not show what the user asked, tell the user that it is an error due to missing items.
+      `,
       parameters: {
         type: "object",
         properties: {

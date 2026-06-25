@@ -38,7 +38,7 @@ npm run dev
 |----------|---------|-------------|
 | `PORT` | `3000` | Express server port |
 | `LLAMA_BASE_URL` | `http://127.0.0.1:8080` | llama.cpp server URL |
-| `LLAMA_N_PREDICT` | `2048` | Max tokens to generate |
+| `LLAMA_N_PREDICT` | `16384` | Max tokens to generate |
 | `AGENT_MAX_MEMORY` | `20` | Max messages per session |
 | `SEARXNG_URL` | `http://localhost:8888` | SearXNG instance URL |
 

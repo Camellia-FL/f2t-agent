@@ -1,5 +1,6 @@
 import { webSearch } from "./search";
 import { createReport } from "./report";
+import { getSelfInfo, searchAsset, getAllAssetRegistries, searchUser } from "./api";
 
 export interface ToolCall {
   name: string;
@@ -36,6 +37,47 @@ export async function executeTool(call: ToolCall): Promise<ToolResult> {
           scope: "simplified",
         });
         return { tool: call.name, result };
+      }
+      case "get_self_info": {
+        const userId = call.arguments.userId as string;
+        const customerId = call.arguments.customerId as string;
+        if (!userId || !customerId) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId" };
+        }
+        const result = await getSelfInfo(userId, customerId);
+        return { tool: call.name, result };
+      }
+      case "search_asset": {
+        const userId2 = call.arguments.userId as string;
+        const customerId2 = call.arguments.customerId as string;
+        const search = call.arguments.search as string;
+        if (!userId2 || !customerId2 || !search) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId, search" };
+        }
+        const assets = await searchAsset(userId2, customerId2, search);
+        return { tool: call.name, result: assets };
+      }
+      case "get_all_asset_registries": {
+        const userId3 = call.arguments.userId as string;
+        const customerId3 = call.arguments.customerId as string;
+        const fields = call.arguments.fields as string[];
+        const cardinality = call.arguments.cardinality as boolean | undefined;
+        if (!userId3 || !customerId3 || !fields) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId, fields" };
+        }
+        const registries = await getAllAssetRegistries(userId3, customerId3, fields, cardinality);
+        return { tool: call.name, result: registries };
+      }
+      case "search_user": {
+        const userId4 = call.arguments.userId as string;
+        const customerId4 = call.arguments.customerId as string;
+        const searchText = call.arguments.search as string;
+        const userFields = call.arguments.fields as string[] | undefined;
+        if (!userId4 || !customerId4 || !searchText) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId, search" };
+        }
+        const users = await searchUser(userId4, customerId4, searchText, userFields);
+        return { tool: call.name, result: users };
       }
       default:
         return { tool: call.name, result: null, error: `Unknown tool: ${call.name}` };
