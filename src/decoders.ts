@@ -90,17 +90,57 @@ export class StreamDecoder {
     return { events, finishReason, toolCalls: this.toolCalls };
   }
 
+  private parsedXmlToolCalls = false;
+
+  private parseXmlToolCallsIfNeeded(): void {
+    if (this.parsedXmlToolCalls) return;
+    this.parsedXmlToolCalls = true;
+
+    const combined = this.thinkingBuf + "\n" + this.fullResponse;
+    const toolCallRe = /<tool_call>\s*<function=(\w+)>([\s\S]*?)<\/function>\s*<\/tool_call>/g;
+    let match: RegExpExecArray | null;
+    let index = this.toolCalls.size;
+
+    while ((match = toolCallRe.exec(combined)) !== null) {
+      const name = match[1];
+      const body = match[2];
+      const rawArgs: Record<string, string> = {};
+      const paramRe = /<parameter=(\w+)>([\s\S]*?)<\/parameter>/g;
+      let pm: RegExpExecArray | null;
+      while ((pm = paramRe.exec(body)) !== null) {
+        rawArgs[pm[1]] = pm[2].trim();
+      }
+
+      const parsedArgs: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(rawArgs)) {
+        try {
+          parsedArgs[key] = JSON.parse(val);
+        } catch {
+          const num = Number(val);
+          parsedArgs[key] = isNaN(num) || val === "" ? val : num;
+        }
+      }
+
+      if (this.toolCalls.has(index)) continue;
+      this.toolCalls.set(index, { id: `xml_${Date.now()}_${index}`, name, arguments: JSON.stringify(parsedArgs) });
+      index++;
+    }
+  }
+
   getResult(): { thinking: string; message: string } {
-    const thinking = this.thinkingBuf.trim();
+    const rawThinking = this.thinkingBuf;
+    const cleanedThinking = rawThinking.replace(/<tool_call>[\s\S]*?<\/tool_call>/g, "").trim();
     const message = this.messageBuf.trim() || this.fullResponse.trim();
-    return { thinking, message };
+    return { thinking: cleanedThinking || rawThinking.trim(), message };
   }
 
   hasToolCalls(): boolean {
+    this.parseXmlToolCallsIfNeeded();
     return this.toolCalls.size > 0;
   }
 
   getToolCalls(): Array<{ name: string; arguments: Record<string, unknown> }> {
+    this.parseXmlToolCallsIfNeeded();
     const calls: Array<{ name: string; arguments: Record<string, unknown> }> = [];
     for (const [, tc] of this.toolCalls) {
       let args: Record<string, unknown> = {};

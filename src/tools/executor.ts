@@ -1,6 +1,6 @@
 import { webSearch } from "./search";
 import { createReport } from "./report";
-import { getSelfInfo, searchAsset, getAllAssetRegistries, searchUser } from "./api";
+import { getSelfInfo, searchAsset, getAllAssetRegistries, searchUser, getVehicleRealtime, getVehicleHistory } from "./api";
 
 export interface ToolCall {
   name: string;
@@ -78,6 +78,28 @@ export async function executeTool(call: ToolCall): Promise<ToolResult> {
         }
         const users = await searchUser(userId4, customerId4, searchText, userFields);
         return { tool: call.name, result: users };
+      }
+      case "get_vehicle_realtime": {
+        const userId5 = call.arguments.userId as string;
+        const customerId5 = call.arguments.customerId as string;
+        const assetIds = call.arguments.assetIds as string[];
+        if (!userId5 || !customerId5 || !assetIds?.length) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId, assetIds" };
+        }
+        const realtime = await getVehicleRealtime(userId5, customerId5, assetIds);
+        return { tool: call.name, result: realtime };
+      }
+      case "get_vehicle_history": {
+        const userId6 = call.arguments.userId as string;
+        const customerId6 = call.arguments.customerId as string;
+        const assetIds2 = call.arguments.assetIds as string[];
+        const unixStart = call.arguments.unixStart as number;
+        const unixEnd = call.arguments.unixEnd as number;
+        if (!userId6 || !customerId6 || !assetIds2?.length || unixStart == null || unixEnd == null) {
+          return { tool: call.name, result: null, error: "Missing required arguments: userId, customerId, assetIds, unixStart, unixEnd" };
+        }
+        const history = await getVehicleHistory(userId6, customerId6, assetIds2, unixStart, unixEnd);
+        return { tool: call.name, result: history };
       }
       default:
         return { tool: call.name, result: null, error: `Unknown tool: ${call.name}` };

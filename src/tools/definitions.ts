@@ -182,4 +182,64 @@ export const tools: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "get_vehicle_realtime",
+      description: "Get real-time location and status for one or more vehicles/assets. Returns current GPS coordinates, speed, heading, ignition/device state (moving/stopped/idle), address, driver name, and sensor data. Use this when the user asks 'where is', 'what is the current location of', 'is [vehicle] moving', or needs live tracking. Requires assetIds — search for assets first if the user only gives a plate or model.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+          assetIds: {
+            type: "array",
+            description: "Array of asset/vehicle IDs to get realtime data for",
+            items: { type: "string" },
+          },
+        },
+        required: ["userId", "customerId", "assetIds"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_vehicle_history",
+      description: "Get historical position data and trips for one or more vehicles/assets within a time range. Returns positions with coordinates, timestamps, speed, heading, state, and grouped trip segments with distances and durations. Use this when the user asks about past movements, 'where was [vehicle] yesterday/last week', trip history, or route history. Requires assetIds — search for assets first if the user only gives a plate or model.",
+      parameters: {
+        type: "object",
+        properties: {
+          userId: {
+            type: "string",
+            description: "The user ID",
+          },
+          customerId: {
+            type: "string",
+            description: "The customer/company ID",
+          },
+          assetIds: {
+            type: "array",
+            description: "Array of asset/vehicle IDs to get history for",
+            items: { type: "string" },
+          },
+          unixStart: {
+            type: "number",
+            description: "Start of time range in Unix epoch seconds",
+          },
+          unixEnd: {
+            type: "number",
+            description: "End of time range in Unix epoch seconds",
+          },
+        },
+        required: ["userId", "customerId", "assetIds", "unixStart", "unixEnd"],
+      },
+    },
+  },
 ];

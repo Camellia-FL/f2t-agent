@@ -71,3 +71,123 @@ export async function searchUser(
   const data = await res.json() as { users: Record<string, string | null>[] };
   return data.users;
 }
+
+// --- New: Vehicle Realtime ---
+
+interface GeoPoint {
+  type: string;
+  coordinates: [number, number];
+}
+
+interface SensorValue {
+  value: number;
+  unit: string;
+}
+
+interface Sensor {
+  id: string;
+  label: string;
+  value: SensorValue;
+}
+
+interface LastLocationDetailDto {
+  assetId: string;
+  deviceId: string;
+  customerId: string;
+  acquisitionTimestamp: number;
+  location: GeoPoint;
+  speed?: number | null;
+  altitude?: number | null;
+  heading?: number | null;
+  satellites?: number | null;
+  state: string;
+  triggerSensorId?: string | null;
+  address?: string | null;
+  streetLimit?: number | null;
+  sensors?: Record<string, Sensor> | null;
+  driverName?: string | null;
+}
+
+interface AssetLocationDetailDto {
+  plate?: string | null;
+  model?: string | null;
+  customCode?: string | null;
+  profileName?: string;
+  isVisible?: boolean;
+}
+
+export interface VehicleRealtimeResponse {
+  locations: Record<string, LastLocationDetailDto>;
+  assets: Record<string, AssetLocationDetailDto>;
+}
+
+export async function getVehicleRealtime(
+  userId: string,
+  customerId: string,
+  assetIds: string[]
+): Promise<VehicleRealtimeResponse> {
+  const res = await fetch(`${F2T_API_BASE_URL}/agent/getVehicleRealtime`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, customerId, assetIds }),
+  });
+  if (!res.ok) throw new Error(`f2t API returned ${res.status}`);
+  return res.json() as Promise<VehicleRealtimeResponse>;
+}
+
+// --- New: Vehicle History ---
+
+export interface HistoryPosition {
+  id: string;
+  coordinates: [number, number];
+  acquisitionTimestamp: number;
+  address?: string;
+  speed?: number;
+  heading?: number;
+  driverName?: string;
+  state: string;
+}
+
+export interface HistoryTripRange {
+  id: string;
+  startAddress: string;
+  startTimestamp: number;
+  stopAddress?: string | null;
+  stopTimestamp?: number | null;
+  distanceKilometers?: number;
+  driveDurationSeconds?: number;
+  parkDurationSeconds?: number;
+  startIndex: number;
+  endIndexExclusive: number;
+}
+
+export interface HistoryAggregates {
+  positionCount: number;
+  tripCount?: number;
+  firstTimestamp?: number;
+  lastTimestamp?: number;
+}
+
+export interface HistoryAsset {
+  positions: HistoryPosition[];
+  trips?: HistoryTripRange[];
+  aggregates?: HistoryAggregates;
+}
+
+export type VehicleHistoryResponse = Record<string, HistoryAsset>;
+
+export async function getVehicleHistory(
+  userId: string,
+  customerId: string,
+  assetIds: string[],
+  unixStart: number,
+  unixEnd: number
+): Promise<VehicleHistoryResponse | null> {
+  const res = await fetch(`${F2T_API_BASE_URL}/agent/getVehicleHistory`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId, customerId, assetIds, unixStart, unixEnd }),
+  });
+  if (!res.ok) throw new Error(`f2t API returned ${res.status}`);
+  return res.json() as Promise<VehicleHistoryResponse | null>;
+}
